@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#fdf7ff" />
+    <title>Choose your goal — Daily Drip</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="data.js" defer></script>
+    <script src="goal.js" defer></script>
+  </head>
+  <body class="goal-page">
+    <main class="goal-main">
+      <a class="back-link" href="index.html">← Back to today</a>
+      <section class="goal-card" aria-labelledby="goal-page-title">
+        <div class="goal-crown" aria-hidden="true">✦ 💧 ✦</div>
+        <p class="eyebrow">Make this quest your own</p>
+        <h1 id="goal-page-title"><span id="goal-person-name">Your</span> daily goal</h1>
+        <p class="goal-intro">Choose the amount that feels right for you. This is your personal path—not a contest.</p>
+
+        <form id="goal-form">
+          <label for="goal-person">Whose goal are we changing?</label>
+          <select id="goal-person"></select>
+
+          <fieldset>
+            <legend>Pick a goal</legend>
+            <div class="goal-options">
+              <label><input type="radio" name="preset-goal" value="48" /><span><strong>48</strong> fl oz<small>Gentle glow</small></span></label>
+              <label><input type="radio" name="preset-goal" value="64" /><span><strong>64</strong> fl oz<small>Steady sparkle</small></span></label>
+              <label><input type="radio" name="preset-goal" value="80" /><span><strong>80</strong> fl oz<small>Full flourish</small></span></label>
+            </div>
+          </fieldset>
+
+          <label for="custom-goal">Or enter your own goal</label>
+          <div class="input-wrap goal-input">
+            <input id="custom-goal" type="number" min="8" max="200" step="1" inputmode="numeric" required />
+            <span>fl oz</span>
+          </div>
+          <p class="form-error" id="goal-error" aria-live="polite"></p>
+          <button class="primary-button save-goal" type="submit">Save my goal ✨</button>
+          <p class="saved-message" id="saved-message" aria-live="polite"></p>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>

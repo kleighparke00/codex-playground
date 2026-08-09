@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f5fbff" />
+    <meta name="description" content="A cheerful team water-tracking prototype." />
+    <title>Daily Drip — An enchanted water tracker</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="data.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="bubble bubble-one" aria-hidden="true"></div>
+    <div class="bubble bubble-two" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <a class="brand" href="#top" aria-label="Daily Drip home">
+        <span class="brand-drop" aria-hidden="true">✨</span>
+        <span>Daily Drip</span>
+      </a>
+      <p class="date-pill" id="today-label"></p>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="greeting">
+        <div class="hero-copy">
+          <p class="eyebrow">Your happily hydrated story</p>
+          <h1 id="greeting">Hello, <span id="greeting-name">Maya</span>!</h1>
+          <p id="encouragement" class="hero-message" aria-live="polite"></p>
+        </div>
+
+        <label class="person-picker" for="person-select">
+          <span>Who’s making a splash?</span>
+          <select id="person-select"></select>
+        </label>
+      </section>
+
+      <section class="tracker-card" aria-labelledby="tracker-title">
+        <div class="tracker-heading">
+          <div>
+            <p class="section-kicker">Today’s enchanted chalice</p>
+            <h2 id="tracker-title"><span id="total-amount">0</span> <small>fl oz</small></h2>
+          </div>
+          <a class="goal-badge" id="goal-link" href="goal.html" aria-label="Change your daily water goal">
+            <span>Daily goal</span>
+            <strong><span id="goal-amount">64</span> fl oz</strong>
+            <small>Change goal →</small>
+          </a>
+        </div>
+
+        <div class="progress-track" role="progressbar" aria-label="Daily water progress" aria-valuemin="0" aria-valuemax="64" aria-valuenow="0">
+          <div class="progress-fill" id="progress-fill">
+            <span class="progress-shine" aria-hidden="true"></span>
+          </div>
+        </div>
+        <div class="progress-caption">
+          <span id="progress-percent">0% refreshed</span>
+          <span id="remaining-amount"></span>
+        </div>
+
+        <div class="add-water">
+          <h3>Add a splash</h3>
+          <div class="quick-adds" aria-label="Quick-add water amounts">
+            <button class="amount-button" type="button" data-amount="8"><strong>+8</strong><span>fl oz</span></button>
+            <button class="amount-button" type="button" data-amount="12"><strong>+12</strong><span>fl oz</span></button>
+            <button class="amount-button" type="button" data-amount="16"><strong>+16</strong><span>fl oz</span></button>
+            <button class="amount-button" type="button" data-amount="20"><strong>+20</strong><span>fl oz</span></button>
+          </div>
+          <div class="splash-layer" id="splash-layer" aria-hidden="true"></div>
+
+          <form class="custom-form" id="custom-form">
+            <label for="custom-amount">Or pour a custom amount</label>
+            <div class="custom-controls">
+              <div class="input-wrap">
+                <input id="custom-amount" name="amount" type="number" min="1" max="200" step="1" inputmode="decimal" placeholder="e.g. 10" required />
+                <span>fl oz</span>
+              </div>
+              <button class="primary-button" type="submit">Add my sip</button>
+            </div>
+            <p class="form-error" id="form-error" aria-live="polite"></p>
+          </form>
+
+          <button class="undo-button" id="undo-button" type="button">
+            <span aria-hidden="true">↶</span> Undo last sip
+          </button>
+        </div>
+        <div class="celebration" id="celebration" aria-live="polite" hidden>
+          <span aria-hidden="true">✨</span>
+          <strong>Goal reached!</strong> You made waves today.
+          <span aria-hidden="true">✨</span>
+        </div>
+      </section>
+
+      <section class="team-section" aria-labelledby="team-title">
+        <div class="section-heading">
+          <div>
+            <p class="section-kicker">A circle of encouragement</p>
+            <h2 id="team-title">Hydration garden</h2>
+          </div>
+          <p>Every sip counts. Cheer on the whole crew!</p>
+        </div>
+        <div class="team-grid" id="team-grid"></div>
+      </section>
+    </main>
+
+    <footer>
+      <span aria-hidden="true">✦</span> A little everyday magic, one sip at a time. <span aria-hidden="true">✦</span>
+    </footer>
+  </body>
+</html>
