@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#f7f5ee" />
+  <title>Hivewise — Apiary companion</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="Hivewise home">
+        <span class="brand-mark" aria-hidden="true">⬡</span>
+        <span>hivewise</span>
+      </a>
+
+      <nav class="main-nav" aria-label="Main navigation">
+        <a class="nav-link active" href="#"><span class="nav-icon">⌂</span>Overview</a>
+        <a class="nav-link" href="#apiaries"><span class="nav-icon">♧</span>Apiaries</a>
+        <a class="nav-link" href="#tasks"><span class="nav-icon">✓</span>Tasks <span class="count-badge">5</span></a>
+        <a class="nav-link" href="#records"><span class="nav-icon">▤</span>Records</a>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <div class="season-card">
+          <div class="season-icon">☀</div>
+          <p class="eyebrow">TODAY'S WEATHER</p>
+          <strong>72°F · Sunny</strong>
+          <span>Great inspection weather</span>
+        </div>
+        <a class="nav-link" href="#settings"><span class="nav-icon">⚙</span>Settings</a>
+        <div class="profile">
+          <div class="avatar">KM</div>
+          <div><strong>Kai Morgan</strong><span>Head beekeeper</span></div>
+          <button aria-label="Profile menu">•••</button>
+        </div>
+      </div>
+    </aside>
+
+    <main>
+      <header class="topbar">
+        <button class="mobile-menu" aria-label="Open navigation">☰</button>
+        <label class="search"><span>⌕</span><input type="search" placeholder="Search hives, tasks, or notes..." /></label>
+        <div class="top-actions">
+          <button class="icon-btn" aria-label="Notifications">♢<span class="notification-dot"></span></button>
+          <button class="assistant-pill" id="openAssistant"><span class="pulse-mini"></span>Ask Hivewise</button>
+        </div>
+      </header>
+
+      <section class="content">
+        <div class="welcome-row">
+          <div>
+            <p class="date-label">TUESDAY, AUGUST 12</p>
+            <h1>Good morning, Kai <span>👋</span></h1>
+            <p>Here’s what’s happening across your apiaries today.</p>
+          </div>
+          <button class="primary-btn" id="startInspection"><span>＋</span> Start inspection</button>
+        </div>
+
+        <div class="stats-grid">
+          <article class="stat-card"><div class="stat-icon honey">⬡</div><div><span>Total hives</span><strong>18</strong><small><b>+2</b> this season</small></div></article>
+          <article class="stat-card"><div class="stat-icon green">♥</div><div><span>Healthy hives</span><strong>15</strong><small><b>83%</b> of all hives</small></div></article>
+          <article class="stat-card"><div class="stat-icon coral">!</div><div><span>Need attention</span><strong>3</strong><small>2 high priority</small></div></article>
+          <article class="stat-card"><div class="stat-icon blue">✓</div><div><span>Open tasks</span><strong>5</strong><small>3 due this week</small></div></article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel apiary-panel" id="apiaries">
+            <div class="panel-header">
+              <div><h2>Your apiaries</h2><p>Health at a glance</p></div>
+              <button class="text-btn">View all <span>→</span></button>
+            </div>
+            <div class="apiary-list">
+              <button class="apiary-row selected" data-name="Clover Hill">
+                <span class="apiary-thumb meadow"><span>♧</span></span>
+                <span class="apiary-main"><strong>Clover Hill</strong><small>8 hives · 2.4 miles away</small></span>
+                <span class="health-info"><span><i class="dot healthy"></i>7 healthy</span><span><i class="dot attention"></i>1 attention</span></span>
+                <span class="chevron">›</span>
+              </button>
+              <button class="apiary-row" data-name="Wildflower Farm">
+                <span class="apiary-thumb flowers"><span>✿</span></span>
+                <span class="apiary-main"><strong>Wildflower Farm</strong><small>6 hives · 7.1 miles away</small></span>
+                <span class="health-info"><span><i class="dot healthy"></i>5 healthy</span><span><i class="dot attention"></i>1 attention</span></span>
+                <span class="chevron">›</span>
+              </button>
+              <button class="apiary-row" data-name="Riverside">
+                <span class="apiary-thumb river"><span>≈</span></span>
+                <span class="apiary-main"><strong>Riverside</strong><small>4 hives · 11.8 miles away</small></span>
+                <span class="health-info"><span><i class="dot healthy"></i>3 healthy</span><span><i class="dot attention"></i>1 attention</span></span>
+                <span class="chevron">›</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="panel assistant-card">
+            <div class="assistant-visual"><div class="sound-ring"><span class="bee">✦</span></div></div>
+            <div class="assistant-copy">
+              <span class="ready-label"><i></i> READY WHEN YOU ARE</span>
+              <h2>Talk to your apiary</h2>
+              <p>Review a hive, log an inspection, or ask a question — completely hands-free.</p>
+              <button class="voice-btn" id="voiceButton"><span class="mic">●</span><span class="voice-label">Start voice session</span></button>
+              <small>Try saying: “Let’s check Hive #1”</small>
+            </div>
+          </section>
+
+          <section class="panel tasks-panel" id="tasks">
+            <div class="panel-header">
+              <div><h2>Upcoming tasks</h2><p>Stay ahead of your hive care</p></div>
+              <button class="add-task-btn" id="addTask">＋ Add task</button>
+            </div>
+            <div class="task-table" id="taskTable">
+              <div class="task-row priority-high">
+                <button class="check" aria-label="Complete task"></button><div class="task-title"><strong>Inspect for queen cells</strong><small>Hive #3 · Clover Hill</small></div><span class="due today">Today</span><span class="priority">High</span><button class="more">•••</button>
+              </div>
+              <div class="task-row">
+                <button class="check" aria-label="Complete task"></button><div class="task-title"><strong>Refill syrup feeder</strong><small>Hive #2 · Wildflower Farm</small></div><span class="due tomorrow">Tomorrow</span><span class="priority medium">Medium</span><button class="more">•••</button>
+              </div>
+              <div class="task-row">
+                <button class="check" aria-label="Complete task"></button><div class="task-title"><strong>Varroa mite count</strong><small>Hive #6 · Clover Hill</small></div><span class="due">Aug 15</span><span class="priority medium">Medium</span><button class="more">•••</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="panel health-panel">
+            <div class="panel-header"><div><h2>Apiary health</h2><p>Last 30 days</p></div><button class="period-btn">30 days⌄</button></div>
+            <div class="health-chart">
+              <div class="score-ring"><div><strong>83</strong><span>health score</span></div></div>
+              <div class="health-legend">
+                <div><span><i class="dot healthy"></i>Strong</span><strong>12</strong></div>
+                <div><span><i class="dot watch"></i>Watch</span><strong>3</strong></div>
+                <div><span><i class="dot attention"></i>Attention</span><strong>3</strong></div>
+              </div>
+            </div>
+            <div class="trend"><span>↗</span><div><strong>Health is up 6%</strong><small>compared with last month</small></div></div>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status"></div>
+  <div class="modal-backdrop" id="voiceModal" aria-hidden="true">
+    <section class="voice-modal" role="dialog" aria-modal="true" aria-labelledby="voiceTitle">
+      <button class="close-modal" aria-label="Close">×</button>
+      <p class="ready-label"><i></i> LIVE HIVE SESSION</p>
+      <h2 id="voiceTitle">Listening at Clover Hill</h2>
+      <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      <p class="transcript">“Let’s go through Hive #1”</p>
+      <div class="assistant-response"><span>✦</span><p><strong>Hivewise</strong>Hive #1 was last inspected 8 days ago. The colony was strong with a laying queen. Your open task is to check honey super capacity. What are you seeing today?</p></div>
+      <div class="modal-actions"><button class="secondary-btn close-session">End session</button><button class="primary-btn" id="saveNote">Save update</button></div>
+    </section>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>
