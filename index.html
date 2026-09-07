@@ -1,159 +1,99 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#f7f5ee" />
-  <title>Hivewise — Apiary companion</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#46b9d5">
+  <title>Sip Circle — Team water tracker</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <a class="brand" href="#" aria-label="Hivewise home">
-        <span class="brand-mark" aria-hidden="true">⬡</span>
-        <span>hivewise</span>
-      </a>
+  <div class="bubble bubble-one" aria-hidden="true"></div>
+  <div class="bubble bubble-two" aria-hidden="true"></div>
 
-      <nav class="main-nav" aria-label="Main navigation">
-        <a class="nav-link active" href="#"><span class="nav-icon">⌂</span>Overview</a>
-        <a class="nav-link" href="#apiaries"><span class="nav-icon">♧</span>Apiaries</a>
-        <a class="nav-link" href="#tasks"><span class="nav-icon">✓</span>Tasks <span class="count-badge">5</span></a>
-        <a class="nav-link" href="#records"><span class="nav-icon">▤</span>Records</a>
-      </nav>
-
-      <div class="sidebar-bottom">
-        <div class="season-card">
-          <div class="season-icon">☀</div>
-          <p class="eyebrow">TODAY'S WEATHER</p>
-          <strong>72°F · Sunny</strong>
-          <span>Great inspection weather</span>
-        </div>
-        <a class="nav-link" href="#settings"><span class="nav-icon">⚙</span>Settings</a>
-        <div class="profile">
-          <div class="avatar">KM</div>
-          <div><strong>Kai Morgan</strong><span>Head beekeeper</span></div>
-          <button aria-label="Profile menu">•••</button>
-        </div>
+  <main>
+    <section class="login-view" id="loginView" aria-labelledby="loginTitle">
+      <div class="login-art" aria-hidden="true">
+        <div class="drop-mascot"><span>◡</span></div>
+        <span class="sparkle s1">✦</span><span class="sparkle s2">✦</span>
       </div>
-    </aside>
+      <div class="login-card">
+        <a class="brand" href="#"><span class="brand-drop">●</span> sip circle</a>
+        <p class="eyebrow">YOUR TEAM'S HYDRATION CLUB</p>
+        <h1 id="loginTitle">Ready to make<br><em>waves?</em></h1>
+        <p class="intro">Choose your profile and enter your 4-digit PIN to see your sips and cheer on the crew.</p>
+        <form id="loginForm" class="auth-form">
+          <div id="nameFieldset" class="hidden"><label for="displayName">Your name</label><div class="email-field"><span>☺</span><input id="displayName" type="text" autocomplete="name" maxlength="60" placeholder="How teammates know you"></div></div>
+          <div id="profileFieldset"><label for="profileSelect">Your profile</label><div class="email-field"><span>☺</span><select id="profileSelect" required><option value="">No profiles yet</option></select></div></div>
+          <label for="pin">4-digit PIN</label><div class="email-field"><span>●</span><input id="pin" type="password" inputmode="numeric" autocomplete="off" pattern="[0-9]{4}" minlength="4" maxlength="4" placeholder="••••" required></div>
+          <div id="goalFieldset" class="hidden"><label for="signupGoal">Daily goal</label><div class="email-field"><span>💧</span><input id="signupGoal" type="number" min="8" max="300" value="64"><span>oz</span></div></div>
+          <p class="form-error" id="loginError" role="alert"></p>
+          <button class="button primary wide" id="authSubmit" type="submit">Sign in <span>→</span></button>
+        </form>
+        <button class="auth-toggle" id="authToggle" type="button">New to the circle? Create a profile</button>
+        <p class="privacy-note">🔒 Your PIN and water data stay in this browser.</p>
+      </div>
+    </section>
 
-    <main>
+    <section class="dashboard hidden" id="dashboard" aria-labelledby="greeting">
       <header class="topbar">
-        <button class="mobile-menu" aria-label="Open navigation">☰</button>
-        <label class="search"><span>⌕</span><input type="search" placeholder="Search hives, tasks, or notes..." /></label>
-        <div class="top-actions">
-          <button class="icon-btn" aria-label="Notifications">♢<span class="notification-dot"></span></button>
-          <button class="assistant-pill" id="openAssistant"><span class="pulse-mini"></span>Ask Hivewise</button>
+        <a class="brand" href="#"><span class="brand-drop">●</span> sip circle</a>
+        <div class="header-actions">
+          <button class="icon-button" id="notificationButton" aria-label="Activity notifications" aria-expanded="false">🔔<span class="notification-count hidden" id="notificationCount">0</span></button>
+          <div class="mini-profile"><span class="avatar" id="headerAvatar"></span><span id="headerName"></span></div>
+          <button class="text-button" id="logoutButton">Sign out</button>
         </div>
+        <div class="notification-popover hidden" id="notificationPopover"><strong>Team ripples</strong><div id="notificationList"></div></div>
       </header>
 
-      <section class="content">
-        <div class="welcome-row">
-          <div>
-            <p class="date-label">TUESDAY, AUGUST 12</p>
-            <h1>Good morning, Kai <span>👋</span></h1>
-            <p>Here’s what’s happening across your apiaries today.</p>
-          </div>
-          <button class="primary-btn" id="startInspection"><span>＋</span> Start inspection</button>
+      <div class="dashboard-content">
+        <div class="welcome">
+          <div><p class="eyebrow" id="dateLabel"></p><h1 id="greeting"></h1><p id="encouragement"></p></div>
+          <button class="streak-pill" id="goalButton">🎯 <strong id="goalButtonText">Set goal</strong><span>adjust daily ounces</span></button>
         </div>
 
-        <div class="stats-grid">
-          <article class="stat-card"><div class="stat-icon honey">⬡</div><div><span>Total hives</span><strong>18</strong><small><b>+2</b> this season</small></div></article>
-          <article class="stat-card"><div class="stat-icon green">♥</div><div><span>Healthy hives</span><strong>15</strong><small><b>83%</b> of all hives</small></div></article>
-          <article class="stat-card"><div class="stat-icon coral">!</div><div><span>Need attention</span><strong>3</strong><small>2 high priority</small></div></article>
-          <article class="stat-card"><div class="stat-icon blue">✓</div><div><span>Open tasks</span><strong>5</strong><small>3 due this week</small></div></article>
+        <div class="main-grid">
+          <section class="card hero-card">
+            <div class="hero-top">
+              <div><p class="card-label">TODAY'S FLOW</p><div class="total"><strong id="todayTotal">0</strong><span>oz</span></div><p>of <b id="goalAmount">0 oz</b> daily goal</p></div>
+              <div class="cup" aria-hidden="true"><div class="cup-water" id="cupWater"></div><div class="cup-face">◡</div></div>
+            </div>
+            <div class="progress-track" role="progressbar" aria-label="Daily water progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="progressFill"></div></div>
+            <div class="progress-copy"><strong id="progressPercent">0% there</strong><span id="remainingText"></span></div>
+            <div class="celebration hidden" id="celebration" role="status">🎉 Goal made! You're positively sparkling!</div>
+            <div class="quick-add">
+              <div><h2>Add a splash</h2><p>Every sip counts</p></div>
+              <div class="amount-buttons">
+                <button data-add="8"><span>💧</span><strong>8 oz</strong><small>A few sips</small></button>
+                <button data-add="12"><span>🥤</span><strong>12 oz</strong><small>Small glass</small></button>
+                <button data-add="16"><span>🫗</span><strong>16 oz</strong><small>Water bottle</small></button>
+                <button data-add="20"><span>🧊</span><strong>20 oz</strong><small>Big bottle</small></button>
+                <button id="customButton"><span>＋</span><strong>Custom</strong><small>Your pour</small></button>
+              </div>
+            </div>
+            <div class="last-entry" id="lastEntry"><span>No sips logged yet — let's make a ripple!</span><button id="undoButton" class="text-button" disabled>↶ Undo last</button></div>
+          </section>
+
+          <aside class="card team-card">
+            <div class="section-heading"><div><p class="card-label">THE SIP CIRCLE</p><h2>Team flow</h2><p>Cheering, never judging.</p></div><span class="live-pill"><i></i> LIVE</span></div>
+            <div class="team-list" id="teamList"></div>
+            <div class="team-note">💙 <span><strong>Little reminder</strong><br>We're all on our own tide. Every drop is worth celebrating!</span></div>
+          </aside>
         </div>
-
-        <div class="dashboard-grid">
-          <section class="panel apiary-panel" id="apiaries">
-            <div class="panel-header">
-              <div><h2>Your apiaries</h2><p>Health at a glance</p></div>
-              <button class="text-btn">View all <span>→</span></button>
-            </div>
-            <div class="apiary-list">
-              <button class="apiary-row selected" data-name="Clover Hill">
-                <span class="apiary-thumb meadow"><span>♧</span></span>
-                <span class="apiary-main"><strong>Clover Hill</strong><small>8 hives · 2.4 miles away</small></span>
-                <span class="health-info"><span><i class="dot healthy"></i>7 healthy</span><span><i class="dot attention"></i>1 attention</span></span>
-                <span class="chevron">›</span>
-              </button>
-              <button class="apiary-row" data-name="Wildflower Farm">
-                <span class="apiary-thumb flowers"><span>✿</span></span>
-                <span class="apiary-main"><strong>Wildflower Farm</strong><small>6 hives · 7.1 miles away</small></span>
-                <span class="health-info"><span><i class="dot healthy"></i>5 healthy</span><span><i class="dot attention"></i>1 attention</span></span>
-                <span class="chevron">›</span>
-              </button>
-              <button class="apiary-row" data-name="Riverside">
-                <span class="apiary-thumb river"><span>≈</span></span>
-                <span class="apiary-main"><strong>Riverside</strong><small>4 hives · 11.8 miles away</small></span>
-                <span class="health-info"><span><i class="dot healthy"></i>3 healthy</span><span><i class="dot attention"></i>1 attention</span></span>
-                <span class="chevron">›</span>
-              </button>
-            </div>
-          </section>
-
-          <section class="panel assistant-card">
-            <div class="assistant-visual"><div class="sound-ring"><span class="bee">✦</span></div></div>
-            <div class="assistant-copy">
-              <span class="ready-label"><i></i> READY WHEN YOU ARE</span>
-              <h2>Talk to your apiary</h2>
-              <p>Review a hive, log an inspection, or ask a question — completely hands-free.</p>
-              <button class="voice-btn" id="voiceButton"><span class="mic">●</span><span class="voice-label">Start voice session</span></button>
-              <small>Try saying: “Let’s check Hive #1”</small>
-            </div>
-          </section>
-
-          <section class="panel tasks-panel" id="tasks">
-            <div class="panel-header">
-              <div><h2>Upcoming tasks</h2><p>Stay ahead of your hive care</p></div>
-              <button class="add-task-btn" id="addTask">＋ Add task</button>
-            </div>
-            <div class="task-table" id="taskTable">
-              <div class="task-row priority-high">
-                <button class="check" aria-label="Complete task"></button><div class="task-title"><strong>Inspect for queen cells</strong><small>Hive #3 · Clover Hill</small></div><span class="due today">Today</span><span class="priority">High</span><button class="more">•••</button>
-              </div>
-              <div class="task-row">
-                <button class="check" aria-label="Complete task"></button><div class="task-title"><strong>Refill syrup feeder</strong><small>Hive #2 · Wildflower Farm</small></div><span class="due tomorrow">Tomorrow</span><span class="priority medium">Medium</span><button class="more">•••</button>
-              </div>
-              <div class="task-row">
-                <button class="check" aria-label="Complete task"></button><div class="task-title"><strong>Varroa mite count</strong><small>Hive #6 · Clover Hill</small></div><span class="due">Aug 15</span><span class="priority medium">Medium</span><button class="more">•••</button>
-              </div>
-            </div>
-          </section>
-
-          <section class="panel health-panel">
-            <div class="panel-header"><div><h2>Apiary health</h2><p>Last 30 days</p></div><button class="period-btn">30 days⌄</button></div>
-            <div class="health-chart">
-              <div class="score-ring"><div><strong>83</strong><span>health score</span></div></div>
-              <div class="health-legend">
-                <div><span><i class="dot healthy"></i>Strong</span><strong>12</strong></div>
-                <div><span><i class="dot watch"></i>Watch</span><strong>3</strong></div>
-                <div><span><i class="dot attention"></i>Attention</span><strong>3</strong></div>
-              </div>
-            </div>
-            <div class="trend"><span>↗</span><div><strong>Health is up 6%</strong><small>compared with last month</small></div></div>
-          </section>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <div class="toast" id="toast" role="status"></div>
-  <div class="modal-backdrop" id="voiceModal" aria-hidden="true">
-    <section class="voice-modal" role="dialog" aria-modal="true" aria-labelledby="voiceTitle">
-      <button class="close-modal" aria-label="Close">×</button>
-      <p class="ready-label"><i></i> LIVE HIVE SESSION</p>
-      <h2 id="voiceTitle">Listening at Clover Hill</h2>
-      <div class="wave"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      <p class="transcript">“Let’s go through Hive #1”</p>
-      <div class="assistant-response"><span>✦</span><p><strong>Hivewise</strong>Hive #1 was last inspected 8 days ago. The colony was strong with a laying queen. Your open task is to check honey super capacity. What are you seeing today?</p></div>
-      <div class="modal-actions"><button class="secondary-btn close-session">End session</button><button class="primary-btn" id="saveNote">Save update</button></div>
+      </div>
     </section>
-  </div>
+  </main>
+
+  <dialog id="customDialog">
+    <form method="dialog" id="customForm">
+      <button class="dialog-close" value="cancel" aria-label="Close">×</button>
+      <div class="dialog-icon">💦</div><p class="card-label">YOUR PERFECT POUR</p><h2>How much are we adding?</h2>
+      <label for="customAmount">Fluid ounces</label><div class="custom-field"><input id="customAmount" type="number" inputmode="decimal" min="1" max="200" step="1" required><span>oz</span></div>
+      <button class="button primary wide" value="default">Add this splash</button>
+    </form>
+  </dialog>
+  <dialog id="goalDialog"><form method="dialog" id="goalForm"><button class="dialog-close" value="cancel" aria-label="Close">×</button><div class="dialog-icon">🎯</div><p class="card-label">YOUR DAILY TIDE</p><h2>Choose your water goal</h2><label for="newGoal">Fluid ounces per day</label><div class="custom-field"><input id="newGoal" type="number" min="8" max="300" required><span>oz</span></div><button class="button primary wide" value="default">Save my goal</button></form></dialog>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="app.js"></script>
 </body>
 </html>

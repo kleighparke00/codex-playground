@@ -1,0 +1,10 @@
+{
+  "name": "sip-circle",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A cheerful, browser-only team water tracker.",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  }
+}
