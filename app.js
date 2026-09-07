@@ -1,28 +1,169 @@
+const PEOPLE = [
+  { id: 'maya', name: 'Maya', email: 'maya@brightworks.co', goal: 80, color: '#ffd36b', initial: 56 },
+  { id: 'jonah', name: 'Jonah', email: 'jonah@brightworks.co', goal: 96, color: '#9de0c2', initial: 76 },
+  { id: 'priya', name: 'Priya', email: 'priya@brightworks.co', goal: 72, color: '#f7b4aa', initial: 64 },
+  { id: 'theo', name: 'Theo', email: 'theo@brightworks.co', goal: 88, color: '#b8d3fa', initial: 40 }
+];
+
+const STORAGE_KEY = 'sip-circle-v1';
 const $ = (selector) => document.querySelector(selector);
-const config = window.SIP_CIRCLE_CONFIG || {};
-const configured = Boolean(config.supabaseUrl && config.supabaseAnonKey && window.supabase);
-const client = configured ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
-let user, profile, profiles = [], entries = [], signingUp = false, realtimeChannel, toastTimer;
+let selectedPerson = PEOPLE[0];
+let currentPerson = null;
+let unread = 0;
+let toastTimer;
+const channel = 'BroadcastChannel' in window ? new BroadcastChannel('sip-circle-team') : null;
 
-function dayRange() { const start = new Date(); start.setHours(0,0,0,0); const end = new Date(start); end.setDate(end.getDate()+1); return [start.toISOString(),end.toISOString()]; }
-function initials(name) { return name.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
-function color(id) { const colors=['#ffd36b','#9de0c2','#f7b4aa','#b8d3fa']; return colors[[...id].reduce((n,c)=>n+c.charCodeAt(0),0)%colors.length]; }
-function toast(message) { $('#toast').textContent=message; $('#toast').classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2800); }
-function busy(value) { $('#authSubmit').disabled=value; $('#authSubmit').textContent=value?'Making a ripple…':signingUp?'Create account →':'Sign in →'; }
+function defaultState() {
+  return { date: localDateKey(), totals: Object.fromEntries(PEOPLE.map((p) => [p.id, p.initial])), entries: Object.fromEntries(PEOPLE.map((p) => [p.id, []])), notifications: [] };
+}
 
-$('#authToggle').addEventListener('click',()=>{ signingUp=!signingUp; $('#nameFieldset').classList.toggle('hidden',!signingUp); $('#goalFieldset').classList.toggle('hidden',!signingUp); $('#displayName').required=signingUp; $('#password').autocomplete=signingUp?'new-password':'current-password'; $('#authToggle').textContent=signingUp?'Already have an account? Sign in':'New to the circle? Create an account'; $('#loginTitle').innerHTML=signingUp?'Come make<br><em>waves.</em>':'Ready to make<br><em>waves?</em>'; $('#loginError').textContent=''; busy(false); });
-$('#loginForm').addEventListener('submit',async event=>{ event.preventDefault(); if(!configured){ $('#loginError').textContent='Setup needed: add your Supabase URL and anon key to config.js.'; return; } busy(true); const email=$('#email').value.trim().toLowerCase(), password=$('#password').value; const result=signingUp?await client.auth.signUp({email,password,options:{data:{display_name:$('#displayName').value.trim(),daily_goal:Number($('#signupGoal').value)}}}):await client.auth.signInWithPassword({email,password}); busy(false); if(result.error){ $('#loginError').textContent=result.error.message; return; } if(signingUp&&!result.data.session){ $('#loginError').textContent='Check your inbox to verify your email, then sign in.'; return; } await enter(result.data.user); });
+function localDateKey() {
+  const now = new Date();
+  return `${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}`;
+}
 
-async function enter(account) { user=account; const result=await client.from('profiles').select('id,display_name,daily_goal').eq('id',user.id).single(); if(result.error){ $('#loginError').textContent='Your profile could not be loaded.'; return; } profile=result.data; $('#loginView').classList.add('hidden'); $('#dashboard').classList.remove('hidden'); await refresh(); subscribe(); }
-async function refresh() { const [start,end]=dayRange(); const [team,water]=await Promise.all([client.rpc('list_team_progress'),client.from('water_entries').select('id,user_id,amount_oz,created_at').gte('created_at',start).lt('created_at',end).order('created_at')]); if(team.error||water.error){ toast('The current flow could not be refreshed.'); return; } profiles=team.data; entries=water.data; render(); }
-function totals() { return entries.reduce((all,item)=>{ all[item.user_id]=(all[item.user_id]||0)+Number(item.amount_oz); return all; },{}); }
-function status(percent){ return percent>=100?'Goal glowing ✨':percent>=75?'Nearly sparkling':percent>=50?'Flowing nicely':percent>0?'Finding their flow':'Ready for a first sip'; }
-function render(){ const all=totals(), total=all[user.id]||0, goal=profile.daily_goal, percent=Math.round(total/goal*100), last=entries.filter(e=>e.user_id===user.id).at(-1); $('#dateLabel').textContent=new Intl.DateTimeFormat('en-US',{weekday:'long',month:'long',day:'numeric'}).format(new Date()).toUpperCase(); $('#greeting').textContent=`Hey, ${profile.display_name}! 👋`; $('#encouragement').textContent=percent>=100?'You made a splash — enjoy that goal glow!':'Your next little sip is already a win.'; $('#headerAvatar').textContent=initials(profile.display_name); $('#headerAvatar').style.background=color(user.id); $('#headerName').textContent=profile.display_name; $('#goalButtonText').textContent=`${goal} oz goal`; $('#todayTotal').textContent=total; $('#goalAmount').textContent=`${goal} oz`; $('#progressPercent').textContent=`${percent}% there`; $('#remainingText').textContent=percent>=100?`${total-goal} oz beyond your goal!`:`${goal-total} oz to go`; const capped=Math.min(percent,100); $('#progressFill').style.width=`${capped}%`; $('.progress-track').setAttribute('aria-valuenow',capped); $('#cupWater').style.height=`${capped}%`; $('#celebration').classList.toggle('hidden',percent<100); $('#lastEntry span').textContent=last?`Last splash: ${last.amount_oz} oz at ${new Date(last.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:'No sips logged yet — let’s make a ripple!'; $('#undoButton').disabled=!last; $('#teamList').innerHTML=profiles.map((p,i)=>{ const amount=all[p.id]||0, pct=Math.round(amount/p.daily_goal*100); return `<div class="team-person"><span class="avatar" style="background:${color(p.id)}">${initials(p.display_name)}</span><div><div class="member-name">${p.display_name} ${p.id===user.id?'<span class="you-badge">YOU</span>':''}</div><div class="member-status">${status(pct)}</div></div><div class="member-total"><strong>${amount} oz</strong><small>${pct}% of goal</small></div><div class="member-progress"><span style="width:${Math.min(pct,100)}%;background:${['#2daccd','#4eb982','#ff826d','#8a9fe8'][i%4]}"></span></div></div>`; }).join(''); }
-async function addWater(amount){ const result=await client.from('water_entries').insert({user_id:user.id,amount_oz:amount}).select().single(); if(result.error){toast('That splash did not save.');return;} entries.push(result.data); render(); toast(`💧 ${amount} oz added!`); const session=await client.auth.getSession(); fetch(`${config.supabaseUrl}/functions/v1/notify-water-update`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.data.session.access_token}`},body:JSON.stringify({entryId:result.data.id})}).catch(()=>{}); }
-document.querySelectorAll('[data-add]').forEach(button=>button.addEventListener('click',()=>addWater(Number(button.dataset.add))));
-$('#customButton').addEventListener('click',()=>{$('#customAmount').value='';$('#customDialog').showModal();}); $('#customForm').addEventListener('submit',e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();const amount=Number($('#customAmount').value);if(amount>0&&amount<=200){$('#customDialog').close();addWater(amount);}});
-$('#undoButton').addEventListener('click',async()=>{const last=entries.filter(e=>e.user_id===user.id).at(-1);if(!last)return;const result=await client.from('water_entries').delete().eq('id',last.id).eq('user_id',user.id);if(result.error){toast('Undo did not save.');return;}entries=entries.filter(e=>e.id!==last.id);render();toast(`↶ Undid ${last.amount_oz} oz`);});
-$('#goalButton').addEventListener('click',()=>{$('#newGoal').value=profile.daily_goal;$('#goalDialog').showModal();}); $('#goalForm').addEventListener('submit',async e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();const goal=Number($('#newGoal').value);if(goal<8||goal>300)return;const result=await client.from('profiles').update({daily_goal:goal}).eq('id',user.id);if(result.error){toast('Your goal could not be saved.');return;}profile.daily_goal=goal;$('#goalDialog').close();render();toast('New daily goal saved! 🎯');});
-$('#logoutButton').addEventListener('click',async()=>{await client.auth.signOut();location.reload();}); $('#notificationButton').addEventListener('click',()=>{$('#notificationPopover').classList.toggle('hidden');$('#notificationList').innerHTML='<div class="notification-item">Email alerts are sent whenever teammates add water.</div>';$('#notificationCount').classList.add('hidden');});
-function subscribe(){ realtimeChannel=client.channel('team-water').on('postgres_changes',{event:'*',schema:'public',table:'water_entries'},async payload=>{if(payload.eventType==='INSERT'&&payload.new.user_id!==user.id){$('#notificationCount').textContent='1';$('#notificationCount').classList.remove('hidden');toast('A teammate just made a splash! 💧');}await refresh();}).subscribe(); }
-(async()=>{if(!configured){$('#loginError').textContent='Setup needed: add your Supabase URL and anon key to config.js.';return;}const result=await client.auth.getSession();if(result.data.session?.user)await enter(result.data.session.user);})();
+function getState() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    if (!stored?.totals || !stored?.entries || stored.date !== localDateKey()) return defaultState();
+    return stored;
+  } catch { return defaultState(); }
+}
+
+function saveState(state) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  channel?.postMessage({ type: 'update' });
+}
+
+function initials(name) { return name.slice(0, 2).toUpperCase(); }
+function avatar(person, className = '') { return `<span class="avatar ${className}" style="background:${person.color}">${initials(person.name)}</span>`; }
+
+function renderPicker() {
+  $('#peoplePicker').innerHTML = PEOPLE.map((person) => `<button class="person-option ${person.id === selectedPerson.id ? 'selected' : ''}" type="button" data-person="${person.id}">${avatar(person)}<small>${person.name}</small></button>`).join('');
+  document.querySelectorAll('.person-option').forEach((button) => button.addEventListener('click', () => {
+    selectedPerson = PEOPLE.find((person) => person.id === button.dataset.person);
+    $('#email').value = selectedPerson.email;
+    $('#loginError').textContent = '';
+    renderPicker();
+  }));
+}
+
+function friendlyStatus(percent) {
+  if (percent >= 100) return 'Goal glowing ✨';
+  if (percent >= 75) return 'Nearly sparkling';
+  if (percent >= 50) return 'Flowing nicely';
+  return 'Finding their flow';
+}
+
+function renderDashboard() {
+  if (!currentPerson) return;
+  const state = getState();
+  const total = state.totals[currentPerson.id] || 0;
+  const percent = Math.round((total / currentPerson.goal) * 100);
+  const displayPercent = Math.min(percent, 100);
+  const entries = state.entries[currentPerson.id] || [];
+  const last = entries.at(-1);
+  $('#dateLabel').textContent = new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(new Date()).toUpperCase();
+  $('#greeting').textContent = `Hey, ${currentPerson.name}! 👋`;
+  $('#encouragement').textContent = percent >= 100 ? 'You made a splash — enjoy that goal glow!' : 'Your next little sip is already a win.';
+  $('#headerAvatar').textContent = initials(currentPerson.name);
+  $('#headerAvatar').style.background = currentPerson.color;
+  $('#headerName').textContent = currentPerson.name;
+  $('#streakCount').textContent = `${Math.max(1, entries.length + 2)} day streak`;
+  $('#todayTotal').textContent = total;
+  $('#goalAmount').textContent = `${currentPerson.goal} oz`;
+  $('#progressPercent').textContent = `${percent}% there`;
+  $('#remainingText').textContent = percent >= 100 ? `${total - currentPerson.goal} oz beyond your goal!` : `${currentPerson.goal - total} oz to go`;
+  $('#progressFill').style.width = `${displayPercent}%`;
+  $('.progress-track').setAttribute('aria-valuenow', displayPercent);
+  $('#cupWater').style.height = `${displayPercent}%`;
+  $('#celebration').classList.toggle('hidden', percent < 100);
+  $('#lastEntry span').textContent = last ? `Last splash: ${last.amount} oz at ${new Date(last.time).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}` : 'No sips logged yet — let’s make a ripple!';
+  $('#undoButton').disabled = !last;
+  renderTeam(state);
+  renderNotifications(state);
+}
+
+function renderTeam(state) {
+  const colors = ['#2daccd', '#4eb982', '#ff826d', '#8a9fe8'];
+  $('#teamList').innerHTML = PEOPLE.map((person, index) => {
+    const total = state.totals[person.id] || 0;
+    const percent = Math.round(total / person.goal * 100);
+    return `<div class="team-person">${avatar(person)}<div><div class="member-name">${person.name} ${person.id === currentPerson.id ? '<span class="you-badge">YOU</span>' : ''}</div><div class="member-status">${friendlyStatus(percent)}</div></div><div class="member-total"><strong>${total} oz</strong><small>${percent}% of goal</small></div><div class="member-progress"><span style="width:${Math.min(percent, 100)}%;background:${colors[index]}"></span></div></div>`;
+  }).join('');
+}
+
+function renderNotifications(state) {
+  const notes = state.notifications.filter((note) => note.personId !== currentPerson.id).slice(-5).reverse();
+  $('#notificationList').innerHTML = notes.length ? notes.map((note) => `<div class="notification-item">💧 <strong>${note.name}</strong> added ${note.amount} oz <span>· ${timeAgo(note.time)}</span></div>`).join('') : '<div class="notification-item">It’s quiet on the water — for now!</div>';
+  $('#notificationCount').textContent = unread;
+  $('#notificationCount').classList.toggle('hidden', unread === 0);
+}
+
+function timeAgo(time) {
+  const minutes = Math.floor((Date.now() - time) / 60000);
+  return minutes < 1 ? 'just now' : `${minutes}m ago`;
+}
+
+function showToast(message) {
+  $('#toast').textContent = message;
+  $('#toast').classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => $('#toast').classList.remove('show'), 2600);
+}
+
+function addWater(amount) {
+  const state = getState();
+  const oldTotal = state.totals[currentPerson.id] || 0;
+  const entry = { amount, time: Date.now() };
+  state.totals[currentPerson.id] = oldTotal + amount;
+  state.entries[currentPerson.id] ||= [];
+  state.entries[currentPerson.id].push(entry);
+  state.notifications.push({ ...entry, personId: currentPerson.id, name: currentPerson.name });
+  saveState(state);
+  renderDashboard();
+  if (oldTotal < currentPerson.goal && state.totals[currentPerson.id] >= currentPerson.goal) showToast('🎉 Goal made! You’re making waves!');
+  else showToast(`💧 ${amount} oz added — lovely splash!`);
+}
+
+function login(event) {
+  event.preventDefault();
+  const email = $('#email').value.trim().toLowerCase();
+  if (email !== selectedPerson.email) {
+    $('#loginError').textContent = `That email doesn’t match ${selectedPerson.name}’s demo profile.`;
+    return;
+  }
+  currentPerson = selectedPerson;
+  sessionStorage.setItem('sip-circle-user', currentPerson.id);
+  $('#loginView').classList.add('hidden');
+  $('#dashboard').classList.remove('hidden');
+  renderDashboard();
+}
+
+renderPicker();
+$('#email').value = selectedPerson.email;
+$('#loginForm').addEventListener('submit', login);
+document.querySelectorAll('[data-add]').forEach((button) => button.addEventListener('click', () => addWater(Number(button.dataset.add))));
+$('#customButton').addEventListener('click', () => { $('#customAmount').value = ''; $('#customDialog').showModal(); setTimeout(() => $('#customAmount').focus(), 0); });
+$('#customForm').addEventListener('submit', (event) => {
+  if (event.submitter?.value === 'cancel') return;
+  event.preventDefault();
+  const amount = Number($('#customAmount').value);
+  if (amount > 0 && amount <= 200) { $('#customDialog').close(); addWater(amount); }
+});
+$('#undoButton').addEventListener('click', () => {
+  const state = getState();
+  const entry = state.entries[currentPerson.id].pop();
+  if (!entry) return;
+  state.totals[currentPerson.id] = Math.max(0, state.totals[currentPerson.id] - entry.amount);
+  const noteIndex = state.notifications.findLastIndex((note) => note.personId === currentPerson.id && note.time === entry.time);
+  if (noteIndex >= 0) state.notifications.splice(noteIndex, 1);
+  saveState(state); renderDashboard(); showToast(`↶ Undid ${entry.amount} oz`);
+});
+$('#logoutButton').addEventListener('click', () => { currentPerson = null; sessionStorage.removeItem('sip-circle-user'); $('#dashboard').classList.add('hidden'); $('#loginView').classList.remove('hidden'); });
+$('#notificationButton').addEventListener('click', () => { const popover = $('#notificationPopover'); popover.classList.toggle('hidden'); const open = !popover.classList.contains('hidden'); $('#notificationButton').setAttribute('aria-expanded', open); if (open) { unread = 0; renderNotifications(getState()); } });
+window.addEventListener('storage', () => { if (currentPerson) { unread += 1; renderDashboard(); showToast('A teammate just made a splash! 💧'); } });
+channel?.addEventListener('message', () => { if (currentPerson) { unread += 1; renderDashboard(); showToast('A teammate just made a splash! 💧'); } });
+
+const remembered = PEOPLE.find((person) => person.id === sessionStorage.getItem('sip-circle-user'));
+if (remembered) { currentPerson = selectedPerson = remembered; $('#loginView').classList.add('hidden'); $('#dashboard').classList.remove('hidden'); renderDashboard(); }

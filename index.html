@@ -21,17 +21,15 @@
         <a class="brand" href="#"><span class="brand-drop">●</span> sip circle</a>
         <p class="eyebrow">YOUR TEAM'S HYDRATION CLUB</p>
         <h1 id="loginTitle">Ready to make<br><em>waves?</em></h1>
-        <p class="intro">Sign in with your verified work email to see your personal sips and cheer on the crew.</p>
-        <form id="loginForm" class="auth-form">
-          <div id="nameFieldset" class="hidden"><label for="displayName">Your name</label><div class="email-field"><span>☺</span><input id="displayName" type="text" autocomplete="name" maxlength="60" placeholder="How teammates know you"></div></div>
-          <label for="email">Work email</label><div class="email-field"><span>✉</span><input id="email" type="email" autocomplete="email" placeholder="you@company.com" required></div>
-          <label for="password">Password</label><div class="email-field"><span>●</span><input id="password" type="password" autocomplete="current-password" minlength="8" placeholder="At least 8 characters" required></div>
-          <div id="goalFieldset" class="hidden"><label for="signupGoal">Daily goal</label><div class="email-field"><span>💧</span><input id="signupGoal" type="number" min="8" max="300" value="64"><span>oz</span></div></div>
+        <p class="intro">Pick your work profile and enter its email to see your personal sips and cheer on the crew.</p>
+        <div class="people-picker" id="peoplePicker" role="group" aria-label="Choose your profile"></div>
+        <form id="loginForm">
+          <label for="email">Work email</label>
+          <div class="email-field"><span aria-hidden="true">✉</span><input id="email" type="email" autocomplete="email" placeholder="you@brightworks.co" required></div>
           <p class="form-error" id="loginError" role="alert"></p>
-          <button class="button primary wide" id="authSubmit" type="submit">Sign in <span>→</span></button>
+          <button class="button primary wide" type="submit">Dive into my day <span>→</span></button>
         </form>
-        <button class="auth-toggle" id="authToggle" type="button">New to the circle? Create an account</button>
-        <p class="privacy-note">🔒 Verify your email before joining the circle.</p>
+        <p class="privacy-note">🔒 Your demo data stays right in this browser.</p>
       </div>
     </section>
 
@@ -41,7 +39,7 @@
         <div class="header-actions">
           <button class="icon-button" id="notificationButton" aria-label="Activity notifications" aria-expanded="false">🔔<span class="notification-count hidden" id="notificationCount">0</span></button>
           <div class="mini-profile"><span class="avatar" id="headerAvatar"></span><span id="headerName"></span></div>
-          <button class="text-button" id="logoutButton">Sign out</button>
+          <button class="text-button" id="logoutButton">Switch person</button>
         </div>
         <div class="notification-popover hidden" id="notificationPopover"><strong>Team ripples</strong><div id="notificationList"></div></div>
       </header>
@@ -49,7 +47,7 @@
       <div class="dashboard-content">
         <div class="welcome">
           <div><p class="eyebrow" id="dateLabel"></p><h1 id="greeting"></h1><p id="encouragement"></p></div>
-          <button class="streak-pill" id="goalButton">🎯 <strong id="goalButtonText">Set goal</strong><span>adjust daily ounces</span></button>
+          <div class="streak-pill">🔥 <strong id="streakCount">0 day streak</strong><span>keep it flowing!</span></div>
         </div>
 
         <div class="main-grid">
@@ -92,10 +90,7 @@
       <button class="button primary wide" value="default">Add this splash</button>
     </form>
   </dialog>
-  <dialog id="goalDialog"><form method="dialog" id="goalForm"><button class="dialog-close" value="cancel" aria-label="Close">×</button><div class="dialog-icon">🎯</div><p class="card-label">YOUR DAILY TIDE</p><h2>Choose your water goal</h2><label for="newGoal">Fluid ounces per day</label><div class="custom-field"><input id="newGoal" type="number" min="8" max="300" required><span>oz</span></div><button class="button primary wide" value="default">Save my goal</button></form></dialog>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="config.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="app.js"></script>
 </body>
 </html>
