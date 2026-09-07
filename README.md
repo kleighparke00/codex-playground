@@ -7,10 +7,12 @@ Sip Circle is a cheerful, browser-only water tracker for a small workplace team.
 No install or build step is needed. Start a static server:
 
 ```bash
-python3 -m http.server 4173
+npm start
 ```
 
-Then visit <http://localhost:4173>.
+Open <http://localhost:4173>. The login page previews without credentials, but account actions require the setup below.
+
+## Production setup
 
 Choose a teammate and use the prefilled demo email. Data is stored in `localStorage`; the signed-in profile is kept in `sessionStorage`. Open a second tab with another profile to see live team updates via `BroadcastChannel`.
 
