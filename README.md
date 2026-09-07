@@ -1,21 +1,23 @@
-# Hivewise
+# Sip Circle
 
-Hivewise is a friendly, voice-first hive management prototype for beekeepers managing multiple apiaries. It keeps hive health, inspections, and tasks in one place and includes an assistant panel designed for hands-free field updates.
+Sip Circle is a real, shared team water tracker with verified email/password accounts, personal daily goals, realtime team progress, undo, and email notifications. The browser is plain HTML, CSS, and JavaScript; Supabase provides authentication, Postgres, row-level security, and realtime updates, while Resend delivers teammate notifications.
 
-## Run locally
-
-No build step is required. Open `index.html` directly, or serve the directory:
+## Local preview
 
 ```bash
-python3 -m http.server 4173
+npm start
 ```
 
-Then visit <http://localhost:4173>.
+Open <http://localhost:4173>. The login page previews without credentials, but account actions require the setup below.
 
-## Included interactions
+## Production setup
 
-- Select an apiary and switch between hive records.
-- Review health metrics, recent inspections, and open tasks.
-- Start a simulated voice session and add a transcribed hive note.
-- Ask the assistant common beekeeping questions.
-- Add and complete hive tasks.
+1. Create a Supabase project and run `supabase/migrations/20260907000000_initial_schema.sql` in its SQL editor (or with the Supabase CLI).
+2. Enable email confirmation in Supabase Authentication and configure the production Site URL/redirect URLs.
+3. Copy the project URL and public anon key into `config.js`. Never place the service-role key there.
+4. Create a Resend account and verify the sending domain.
+5. Set Edge Function secrets: `RESEND_API_KEY` and `NOTIFICATION_FROM_EMAIL` (for example, `Sip Circle <updates@example.com>`).
+6. Deploy `supabase/functions/notify-water-update` with JWT verification enabled.
+7. Serve the static files over HTTPS in production.
+
+There is no seeded demo data. New verified accounts automatically receive a profile, and water entries begin at zero. Resend notifications go to every registered teammate except the person who logged the water.

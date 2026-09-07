@@ -1,64 +1,28 @@
-const $ = (selector, context = document) => context.querySelector(selector);
-const $$ = (selector, context = document) => [...context.querySelectorAll(selector)];
+const $ = (selector) => document.querySelector(selector);
+const config = window.SIP_CIRCLE_CONFIG || {};
+const configured = Boolean(config.supabaseUrl && config.supabaseAnonKey && window.supabase);
+const client = configured ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
+let user, profile, profiles = [], entries = [], signingUp = false, realtimeChannel, toastTimer;
 
-const toast = $('#toast');
-let toastTimer;
-function showToast(message) {
-  toast.textContent = message;
-  toast.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
-}
+function dayRange() { const start = new Date(); start.setHours(0,0,0,0); const end = new Date(start); end.setDate(end.getDate()+1); return [start.toISOString(),end.toISOString()]; }
+function initials(name) { return name.trim().split(/\s+/).slice(0,2).map(p=>p[0]).join('').toUpperCase(); }
+function color(id) { const colors=['#ffd36b','#9de0c2','#f7b4aa','#b8d3fa']; return colors[[...id].reduce((n,c)=>n+c.charCodeAt(0),0)%colors.length]; }
+function toast(message) { $('#toast').textContent=message; $('#toast').classList.add('show'); clearTimeout(toastTimer); toastTimer=setTimeout(()=>$('#toast').classList.remove('show'),2800); }
+function busy(value) { $('#authSubmit').disabled=value; $('#authSubmit').textContent=value?'Making a ripple…':signingUp?'Create account →':'Sign in →'; }
 
-const modal = $('#voiceModal');
-function openVoiceSession() {
-  modal.classList.add('open');
-  modal.setAttribute('aria-hidden', 'false');
-  $('.assistant-card').classList.add('listening');
-  document.body.style.overflow = 'hidden';
-}
-function closeVoiceSession() {
-  modal.classList.remove('open');
-  modal.setAttribute('aria-hidden', 'true');
-  $('.assistant-card').classList.remove('listening');
-  document.body.style.overflow = '';
-}
+$('#authToggle').addEventListener('click',()=>{ signingUp=!signingUp; $('#nameFieldset').classList.toggle('hidden',!signingUp); $('#goalFieldset').classList.toggle('hidden',!signingUp); $('#displayName').required=signingUp; $('#password').autocomplete=signingUp?'new-password':'current-password'; $('#authToggle').textContent=signingUp?'Already have an account? Sign in':'New to the circle? Create an account'; $('#loginTitle').innerHTML=signingUp?'Come make<br><em>waves.</em>':'Ready to make<br><em>waves?</em>'; $('#loginError').textContent=''; busy(false); });
+$('#loginForm').addEventListener('submit',async event=>{ event.preventDefault(); if(!configured){ $('#loginError').textContent='Setup needed: add your Supabase URL and anon key to config.js.'; return; } busy(true); const email=$('#email').value.trim().toLowerCase(), password=$('#password').value; const result=signingUp?await client.auth.signUp({email,password,options:{data:{display_name:$('#displayName').value.trim(),daily_goal:Number($('#signupGoal').value)}}}):await client.auth.signInWithPassword({email,password}); busy(false); if(result.error){ $('#loginError').textContent=result.error.message; return; } if(signingUp&&!result.data.session){ $('#loginError').textContent='Check your inbox to verify your email, then sign in.'; return; } await enter(result.data.user); });
 
-$('#voiceButton').addEventListener('click', openVoiceSession);
-$('#openAssistant').addEventListener('click', openVoiceSession);
-$('#startInspection').addEventListener('click', openVoiceSession);
-$('.close-modal').addEventListener('click', closeVoiceSession);
-$('.close-session').addEventListener('click', closeVoiceSession);
-modal.addEventListener('click', (event) => { if (event.target === modal) closeVoiceSession(); });
-document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeVoiceSession(); });
-
-$('#saveNote').addEventListener('click', () => {
-  closeVoiceSession();
-  showToast('Hive #1 inspection update saved to records');
-});
-
-$$('.check').forEach((button) => button.addEventListener('click', () => {
-  const row = button.closest('.task-row');
-  row.classList.toggle('completed');
-  showToast(row.classList.contains('completed') ? 'Task marked complete' : 'Task reopened');
-}));
-
-$$('.apiary-row').forEach((row) => row.addEventListener('click', () => {
-  $$('.apiary-row').forEach((item) => item.classList.remove('selected'));
-  row.classList.add('selected');
-  showToast(`${row.dataset.name} selected`);
-}));
-
-$('#addTask').addEventListener('click', () => {
-  const title = window.prompt('What needs to be done?');
-  if (!title?.trim()) return;
-  const row = document.createElement('div');
-  row.className = 'task-row';
-  row.innerHTML = `<button class="check" aria-label="Complete task"></button><div class="task-title"><strong></strong><small>Hive #1 · Clover Hill</small></div><span class="due">New</span><span class="priority medium">Medium</span><button class="more">•••</button>`;
-  $('strong', row).textContent = title.trim();
-  $('.check', row).addEventListener('click', () => row.classList.toggle('completed'));
-  $('#taskTable').appendChild(row);
-  showToast('New task added');
-});
-
-$('.mobile-menu').addEventListener('click', () => $('.sidebar').classList.toggle('open'));
+async function enter(account) { user=account; const result=await client.from('profiles').select('id,display_name,daily_goal').eq('id',user.id).single(); if(result.error){ $('#loginError').textContent='Your profile could not be loaded.'; return; } profile=result.data; $('#loginView').classList.add('hidden'); $('#dashboard').classList.remove('hidden'); await refresh(); subscribe(); }
+async function refresh() { const [start,end]=dayRange(); const [team,water]=await Promise.all([client.rpc('list_team_progress'),client.from('water_entries').select('id,user_id,amount_oz,created_at').gte('created_at',start).lt('created_at',end).order('created_at')]); if(team.error||water.error){ toast('The current flow could not be refreshed.'); return; } profiles=team.data; entries=water.data; render(); }
+function totals() { return entries.reduce((all,item)=>{ all[item.user_id]=(all[item.user_id]||0)+Number(item.amount_oz); return all; },{}); }
+function status(percent){ return percent>=100?'Goal glowing ✨':percent>=75?'Nearly sparkling':percent>=50?'Flowing nicely':percent>0?'Finding their flow':'Ready for a first sip'; }
+function render(){ const all=totals(), total=all[user.id]||0, goal=profile.daily_goal, percent=Math.round(total/goal*100), last=entries.filter(e=>e.user_id===user.id).at(-1); $('#dateLabel').textContent=new Intl.DateTimeFormat('en-US',{weekday:'long',month:'long',day:'numeric'}).format(new Date()).toUpperCase(); $('#greeting').textContent=`Hey, ${profile.display_name}! 👋`; $('#encouragement').textContent=percent>=100?'You made a splash — enjoy that goal glow!':'Your next little sip is already a win.'; $('#headerAvatar').textContent=initials(profile.display_name); $('#headerAvatar').style.background=color(user.id); $('#headerName').textContent=profile.display_name; $('#goalButtonText').textContent=`${goal} oz goal`; $('#todayTotal').textContent=total; $('#goalAmount').textContent=`${goal} oz`; $('#progressPercent').textContent=`${percent}% there`; $('#remainingText').textContent=percent>=100?`${total-goal} oz beyond your goal!`:`${goal-total} oz to go`; const capped=Math.min(percent,100); $('#progressFill').style.width=`${capped}%`; $('.progress-track').setAttribute('aria-valuenow',capped); $('#cupWater').style.height=`${capped}%`; $('#celebration').classList.toggle('hidden',percent<100); $('#lastEntry span').textContent=last?`Last splash: ${last.amount_oz} oz at ${new Date(last.created_at).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'})}`:'No sips logged yet — let’s make a ripple!'; $('#undoButton').disabled=!last; $('#teamList').innerHTML=profiles.map((p,i)=>{ const amount=all[p.id]||0, pct=Math.round(amount/p.daily_goal*100); return `<div class="team-person"><span class="avatar" style="background:${color(p.id)}">${initials(p.display_name)}</span><div><div class="member-name">${p.display_name} ${p.id===user.id?'<span class="you-badge">YOU</span>':''}</div><div class="member-status">${status(pct)}</div></div><div class="member-total"><strong>${amount} oz</strong><small>${pct}% of goal</small></div><div class="member-progress"><span style="width:${Math.min(pct,100)}%;background:${['#2daccd','#4eb982','#ff826d','#8a9fe8'][i%4]}"></span></div></div>`; }).join(''); }
+async function addWater(amount){ const result=await client.from('water_entries').insert({user_id:user.id,amount_oz:amount}).select().single(); if(result.error){toast('That splash did not save.');return;} entries.push(result.data); render(); toast(`💧 ${amount} oz added!`); const session=await client.auth.getSession(); fetch(`${config.supabaseUrl}/functions/v1/notify-water-update`,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.data.session.access_token}`},body:JSON.stringify({entryId:result.data.id})}).catch(()=>{}); }
+document.querySelectorAll('[data-add]').forEach(button=>button.addEventListener('click',()=>addWater(Number(button.dataset.add))));
+$('#customButton').addEventListener('click',()=>{$('#customAmount').value='';$('#customDialog').showModal();}); $('#customForm').addEventListener('submit',e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();const amount=Number($('#customAmount').value);if(amount>0&&amount<=200){$('#customDialog').close();addWater(amount);}});
+$('#undoButton').addEventListener('click',async()=>{const last=entries.filter(e=>e.user_id===user.id).at(-1);if(!last)return;const result=await client.from('water_entries').delete().eq('id',last.id).eq('user_id',user.id);if(result.error){toast('Undo did not save.');return;}entries=entries.filter(e=>e.id!==last.id);render();toast(`↶ Undid ${last.amount_oz} oz`);});
+$('#goalButton').addEventListener('click',()=>{$('#newGoal').value=profile.daily_goal;$('#goalDialog').showModal();}); $('#goalForm').addEventListener('submit',async e=>{if(e.submitter?.value==='cancel')return;e.preventDefault();const goal=Number($('#newGoal').value);if(goal<8||goal>300)return;const result=await client.from('profiles').update({daily_goal:goal}).eq('id',user.id);if(result.error){toast('Your goal could not be saved.');return;}profile.daily_goal=goal;$('#goalDialog').close();render();toast('New daily goal saved! 🎯');});
+$('#logoutButton').addEventListener('click',async()=>{await client.auth.signOut();location.reload();}); $('#notificationButton').addEventListener('click',()=>{$('#notificationPopover').classList.toggle('hidden');$('#notificationList').innerHTML='<div class="notification-item">Email alerts are sent whenever teammates add water.</div>';$('#notificationCount').classList.add('hidden');});
+function subscribe(){ realtimeChannel=client.channel('team-water').on('postgres_changes',{event:'*',schema:'public',table:'water_entries'},async payload=>{if(payload.eventType==='INSERT'&&payload.new.user_id!==user.id){$('#notificationCount').textContent='1';$('#notificationCount').classList.remove('hidden');toast('A teammate just made a splash! 💧');}await refresh();}).subscribe(); }
+(async()=>{if(!configured){$('#loginError').textContent='Setup needed: add your Supabase URL and anon key to config.js.';return;}const result=await client.auth.getSession();if(result.data.session?.user)await enter(result.data.session.user);})();
